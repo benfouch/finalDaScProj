@@ -1,5 +1,5 @@
 import os
-
+import pandas as pd
 
 
 # I think the algo needs to be like this:
@@ -47,6 +47,8 @@ class Record():
             
         print('***************************************')
 
+
+    
     
 
 
@@ -79,7 +81,7 @@ def read_records(file):
         record = ''
         id = ''
         i = 0
-        for line in contents[0:100]:
+        for line in contents:
             
             if start:
                 
@@ -103,20 +105,26 @@ def read_records(file):
 
 
 
+def write_to_csv(records, filename):
+    data = [record.__dict__ for record in records]
+    df = pd.DataFrame(data)
+    df.to_csv(filename, index=False)
+    
     
 
-def fix_title(records):
+def fix_records(records):
     
     record_objects = []
     for x in records:
-        r = ft(x)
+        r = f(x)
         if r != -1:
             record_objects.append(r)
             r.pretty_print()
+    return record_objects
             
     
 
-def ft(record):
+def f(record):
     """ 
     Fixes one title
     Titles always start at index 13 when splitting by commas
@@ -173,14 +181,14 @@ def ft(record):
         result.link_flair_text = title_split[-1]
         title_split.pop()
         title_split = " ".join(x for x in title_split)
-        result.title = title_split[0]
+        result.title = title_split[0].replace('\n', '')
        
     # if length equal to two this is normal case
     # it has the title and link flair text
     elif len(title_split) == 2: 
         result.link_flair_text = title_split[-1]
         title_split.pop()
-        result.title = title_split[0]
+        result.title = title_split[0].replace('\n', '')
 
     
     # Numbers are easy to work with
@@ -196,11 +204,11 @@ def ft(record):
 
     # selftext is all text except last two which are shortlink and thumbnail
     selftext_intermediate = " ".join(y for y in x[index:-2])
-    result.selftext = selftext_intermediate.replace("\"", '')
+    result.selftext = selftext_intermediate.replace("\"", '').replace('\n', '')
     result.thumbnail = x[-2].replace("\"", '')
-    result.shortlink = x[-1].replace("\"", '')
+    result.shortlink = x[-1].replace("\"", '').replace('\n', '')
     
-    
+
     
     
     
@@ -214,7 +222,7 @@ if __name__ == '__main__':
     data = os.path.join('Data','dummy.csv')
     
     records = read_records(data)
-    fix_title(records)
-    
+    records = fix_records(records)
+    write_to_csv(records, 'dummy_text_clean.csv')
     # pretty_print_records(records)
     
