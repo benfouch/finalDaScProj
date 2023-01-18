@@ -48,15 +48,6 @@ class Record():
         print('***************************************')
 
 
-    
-    
-
-
-
-
-
-
-
 
 
 
@@ -73,9 +64,11 @@ def read_records(file):
         # 13 commas before title
         headers = f.readline()
         print(headers)
-        print('\n\n')
+     
         contents = f.readlines()
+        print(f'Scanning: {file}')
         print(f'Length of contents: {len(contents)}')
+        
         start = True
         all_records = []
         record = ''
@@ -86,11 +79,12 @@ def read_records(file):
             if start:
                 
                 id = line.split(',')[0].replace('"', '')
+                
                 start = False
             # if there is a link with the same id as the beginning id 
-            # print(line.split(',')[-1].replace('"', ''))
-            # print(id)
-            if id in line.split(',')[-1]: 
+            
+            if f'https://redd.it/{id}' == line.split(',')[-1].replace('"', '').replace('\n', ''): 
+                
                 record = record + line
                 all_records.append(record)
                 record = ''
@@ -108,6 +102,7 @@ def read_records(file):
 def write_to_csv(records, filename):
     data = [record.__dict__ for record in records]
     df = pd.DataFrame(data)
+    print(df.info())
     df.to_csv(filename, index=False)
     
     
@@ -119,15 +114,16 @@ def fix_records(records):
         r = f(x)
         if r != -1:
             record_objects.append(r)
-            r.pretty_print()
+            # r.pretty_print()
     return record_objects
             
     
 
 def f(record):
     """ 
-    Fixes one title
+    Fixes one record
     Titles always start at index 13 when splitting by commas
+    Selftext always start at index + 6 and end at length - 2
     """
     result = Record()
     
@@ -146,11 +142,7 @@ def f(record):
     result.is_self = x[10]
     result.is_video = x[11]
     result.is_original_content = x[12]
-    
 
-    
-    
-    
     
     title = ''
     # start index (where title starts in every csv file)
@@ -208,21 +200,25 @@ def f(record):
     result.thumbnail = x[-2].replace("\"", '')
     result.shortlink = x[-1].replace("\"", '').replace('\n', '')
     
-
-    
-    
-    
-    
     return result
     
 
 
 if __name__ == '__main__':
+    """
+    To use this script, all you need to do is make a folder called 'Data'
+    in your home directory and put all the broken reddit csv files in the folder. 
+    Then this script will fix for you, because this script loves you.
+    """
     
-    data = os.path.join('Data','dummy.csv')
-    
-    records = read_records(data)
-    records = fix_records(records)
-    write_to_csv(records, 'dummy_text_clean.csv')
-    # pretty_print_records(records)
+    for doc in os.listdir('Data'):
+        print(doc)
+         
+        # problem with forex at line 150000'
+        data = os.path.join('Data', doc,'submissions_reddit.csv')
+        
+        records = read_records(data)
+        records = fix_records(records)
+        write_to_csv(records, os.path.join('Data',doc, f'{doc}_cleaned.csv'))
+        # pretty_print_records(records)
     
