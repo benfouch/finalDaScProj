@@ -63,7 +63,7 @@ def read_records(file):
     with open(file, 'r+', encoding="utf8") as f:
         # 13 commas before title
         headers = f.readline()
-        print(headers)
+        # print(headers)
      
         contents = f.readlines()
         print(f'Scanning: {file}')
@@ -90,8 +90,8 @@ def read_records(file):
                 record = ''
                 start = True
             else:
-                
                 record = record + line
+                
             i += 1
     
         
@@ -102,10 +102,10 @@ def read_records(file):
 def write_to_csv(records, filename):
     data = [record.__dict__ for record in records]
     df = pd.DataFrame(data)
-    print(df.info())
+    # print(df.info())
     df.to_csv(filename, index=False)
     
-    
+
 
 def fix_records(records):
     
@@ -144,6 +144,11 @@ def f(record):
     result.is_original_content = x[12]
 
     
+    #id,author,created,retrieved,edited,pinned,archived,locked,removed,deleted,is_self,is_video,is_original_content,title,link_flair_text,upvote_ratio,score,gilded,total_awards_received,num_comments,num_crossposts,selftext,thumbnail,shortlink
+    # created,id,author,retrieved,edited,pinned,archived,locked,removed,deleted,is_self,is_video,is_original_content,title,link_flair_text,upvote_ratio,score,gilded,total_awards_received,num_comments,num_crossposts,selftext,thumbnail,shortlink
+    # 2021-02-28 17:00:53,lukpew,BADrop,2021-03-01 05:07:03,1970-01-01 00:00:00,0,0,0,0,0,0,0,0,Barenaked Ladies - ,If I Had $1,0.0,"000"""" (2/6) 2007""","""YOLO""",0.67,1,0,0 0 0 ,image,https://redd.it/lukpew
+    
+    
     title = ''
     # start index (where title starts in every csv file)
     index = 13
@@ -165,7 +170,7 @@ def f(record):
     title_split = [x for x in title_split if x != '']
     
     # If length was less than 2 there was an error
-    if len(title_split) < 2:
+    if len(title_split) != 2:
         return -1
     
     # If the length is greater than 2 than we had quotes in the title
@@ -173,14 +178,14 @@ def f(record):
         result.link_flair_text = title_split[-1]
         title_split.pop()
         title_split = " ".join(x for x in title_split)
-        result.title = title_split[0].replace('\n', '')
+        result.title = title_split[0].replace('\n', '').replace(',', '')
        
     # if length equal to two this is normal case
     # it has the title and link flair text
     elif len(title_split) == 2: 
         result.link_flair_text = title_split[-1]
         title_split.pop()
-        result.title = title_split[0].replace('\n', '')
+        result.title = title_split[0].replace('\n', '').replace(',', '')
 
     
     # Numbers are easy to work with
@@ -196,12 +201,82 @@ def f(record):
 
     # selftext is all text except last two which are shortlink and thumbnail
     selftext_intermediate = " ".join(y for y in x[index:-2])
-    result.selftext = selftext_intermediate.replace("\"", '').replace('\n', '')
+    result.selftext = selftext_intermediate.replace("\"", '').replace('\n', '').replace(',', '')
     result.thumbnail = x[-2].replace("\"", '')
     result.shortlink = x[-1].replace("\"", '').replace('\n', '')
     
     return result
+  
+  
+  
+def combine_dataset():
+    # list of file names to be combined
+    file_names = os.listdir('Data')
+    files =  [os.path.join('Data', x, f'{x}_cleaned.csv') for x in file_names]
+
+    # read the first file and set the date time column as index
+    df = pd.read_csv(files[0], parse_dates=['created'], index_col='created')
+
+    # iterate through the remaining files and append them to the first one
+    for file in files[1:]:
+        # read the current file and set the date time column as index
+        temp_df = pd.read_csv(file, parse_dates=['created'], index_col='created')
+        # append the current file to the first one
+        df = df.append(temp_df)
+
+    # sort the dataframe by the date time index
+    df.sort_index(inplace=True)
+
+    # write the combined data to a new csv file
+    df.to_csv('combined_files.csv')
+   
+
+
+def remove_problem_records(records):
+    new_records = []
+    counter = 0
     
+    for x in records:
+        
+        try:
+            # 'gilded', 'total_awards_received', 'num_comments'
+            float(x.score)
+            int(x.gilded)
+            int(x.total_awards_received)
+            int(x.num_comments)
+            new_records.append(x)
+            
+        except ValueError:
+            print('sad face')
+            counter += 1
+    
+    return new_records, counter
+
+
+def clean_and_combine_routine():
+    total_records_unrecovered = 0
+    for doc in os.listdir('Data'):
+        # If you want to clean csv files
+        print(doc)
+        data = os.path.join('Data', doc,'submissions_reddit.csv')
+        
+        records = read_records(data)
+        records = fix_records(records)
+        records, counter = remove_problem_records(records)
+        write_to_csv(records, os.path.join('Data',doc, f'{doc}_cleaned.csv'))
+        total_records_unrecovered += counter
+        
+    
+    # If you just want to combine_datasets
+    combine_dataset()
+    print(f"Total records lost: {total_records_unrecovered}")
+
+
+
+         
+        
+
+
 
 
 if __name__ == '__main__':
@@ -210,15 +285,15 @@ if __name__ == '__main__':
     in your home directory and put all the broken reddit csv files in the folder. 
     Then this script will fix for you, because this script loves you.
     """
+    # This routine cleans all the data and combines it
+    clean_and_combine_routine()
     
-    for doc in os.listdir('Data'):
-        print(doc)
-         
-        # problem with forex at line 150000'
-        data = os.path.join('Data', doc,'submissions_reddit.csv')
-        
-        records = read_records(data)
-        records = fix_records(records)
-        write_to_csv(records, os.path.join('Data',doc, f'{doc}_cleaned.csv'))
-        # pretty_print_records(records)
+    
+
+    
+    
+    
+    
+    
+    
     
