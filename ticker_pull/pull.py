@@ -1,7 +1,7 @@
 import yfinance as yf
 
 
-def pull(ticker_name, save_folder='./data'):
+def pull(ticker_name, save_folder='./Data'):
     try:
         ticker = ticker_name
         ticker_obj = yf.Ticker(ticker)
@@ -14,4 +14,4 @@ def pull(ticker_name, save_folder='./data'):
     except Exception as e:
         print(f'Failed to load ticker {ticker_name} with exception{e}')
 
-pull('MSFT', './data')
+pull('MSFT', './Data')
