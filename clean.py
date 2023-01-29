@@ -103,7 +103,7 @@ def write_to_csv(records, filename):
     data = [record.__dict__ for record in records]
     df = pd.DataFrame(data)
     # print(df.info())
-    df.to_csv(filename, index=False)
+    df.to_csv(filename, index=False, escapechar=',')
     
 
 
