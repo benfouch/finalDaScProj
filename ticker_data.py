@@ -45,6 +45,7 @@ if __name__ == '__main__':
     
     df_list = run_protocol()
     full_df = put_datasets_together(df_list)
+    full_df.to_csv('ticker_data.csv')
     
 
 
