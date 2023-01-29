@@ -16,7 +16,7 @@ def run_protocol():
         tick = yf.Ticker(x)
         ticker_history = tick.history(start="2021-01-01", end="2021-12-31", interval='1d', actions=False)
         data = pd.DataFrame(ticker_history)
-        data[f'{x}_delta'] = (data['Close'] - data['Open'] )/data['Open']
+        data[f'{x}'] = (data['Close'] - data['Open'] )/data['Open']
         # data['mean'] = (data['Close'] + data['Open'] )/2
         data.drop(['High','Open', 'Low', 'Close', 'Volume'], inplace=True, axis=1)
         df_list.append(data)
