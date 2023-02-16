@@ -6,3 +6,5 @@ combined_files.csv
 combined.csv
 /ticker_pull/data/
 nice_combined_data.csv
+sent_df
+pred_model.h5
